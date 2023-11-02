@@ -9,8 +9,7 @@ import org.apache.hadoop.mapreduce.Mapper;
 
 import java.io.*;
 import java.net.URI;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 public class DataMapper extends Mapper<LongWritable, Text,Text, DoubleWritable[]> {
     BufferedReader bufferedReader;
@@ -18,15 +17,21 @@ public class DataMapper extends Mapper<LongWritable, Text,Text, DoubleWritable[]
     @Override
     protected void map(LongWritable key, Text value, Mapper<LongWritable, Text, Text, DoubleWritable[]>.Context context) throws IOException, InterruptedException {
         List<Double[]> centers = readCenters();
+        Map<Integer, String> dict=Map.of(0,"c1",1,"c2",2,"c3");
         String[] s = value.toString().split(" ");
         double x = Double.parseDouble(s[0]);
         double y = Double.parseDouble(s[1]);
+        ArrayList<Double> dist=new ArrayList<>();
         centers.forEach(c->{
             double X = Math.pow(x - c[0], 2);
             double Y = Math.pow(y - c[1], 2);
+            double d = Math.sqrt(X + Y);
+            dist.add(d);
         });
 
-
+        Double max = Collections.max(dist);
+        String c = dict.get(max);
+        context.write(new Text(c),new DoubleWritable[]{new DoubleWritable(x),new DoubleWritable(y)});
     }
 
     @Override
